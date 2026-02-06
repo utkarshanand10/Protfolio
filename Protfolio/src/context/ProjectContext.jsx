@@ -16,7 +16,9 @@ export const ProjectProvider = ({ children }) => {
 
     const fetchProjects = async () => {
         try {
-            const response = await fetch("http://localhost:5000/api/projects");
+            const response = await fetch(
+                `${import.meta.env.VITE_API_BASE_URL}/api/projects`,
+            );
             if (response.ok) {
                 const data = await response.json();
                 setProjects(data);

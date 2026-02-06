@@ -16,7 +16,7 @@ import {
     X,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api`;
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -366,7 +366,9 @@ function App() {
                                     projectForm.existingImages &&
                                     projectForm.existingImages.length > 0 && (
                                         <div className="mb-3">
-                                            <p className="text-xs text-slate-500 mb-2 font-semibold">Existing Images</p>
+                                            <p className="text-xs text-slate-500 mb-2 font-semibold">
+                                                Existing Images
+                                            </p>
                                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                                                 {projectForm.existingImages.map(
                                                     (img, idx) => (
@@ -398,30 +400,44 @@ function App() {
                                         </div>
                                     )}
 
-                                {projectForm.images && projectForm.images.length > 0 && (
-                                    <div className="mb-3">
-                                        <p className="text-xs text-primary-500 mb-2 font-semibold">New Images to Upload</p>
-                                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                                            {projectForm.images.map((file, idx) => (
-                                                <div key={idx} className="relative group aspect-square">
-                                                    <img 
-                                                        src={URL.createObjectURL(file)} 
-                                                        alt={`New ${idx}`} 
-                                                        className="w-full h-full object-cover rounded-lg border-2 border-primary-500/50"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveNewImage(idx)}
-                                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                                                        title="Remove image"
-                                                    >
-                                                        <X size={14} />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                {projectForm.images &&
+                                    projectForm.images.length > 0 && (
+                                        <div className="mb-3">
+                                            <p className="text-xs text-primary-500 mb-2 font-semibold">
+                                                New Images to Upload
+                                            </p>
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                                {projectForm.images.map(
+                                                    (file, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="relative group aspect-square"
+                                                        >
+                                                            <img
+                                                                src={URL.createObjectURL(
+                                                                    file,
+                                                                )}
+                                                                alt={`New ${idx}`}
+                                                                className="w-full h-full object-cover rounded-lg border-2 border-primary-500/50"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleRemoveNewImage(
+                                                                        idx,
+                                                                    )
+                                                                }
+                                                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                                                title="Remove image"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
                                 <div className="relative">
                                     <div className="glass-input p-0 overflow-hidden flex items-center relative group cursor-pointer hover:border-primary-500 transition-colors">
