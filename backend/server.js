@@ -221,14 +221,27 @@ app.put("/api/projects/:id", upload.array("images", 10), async (req, res) => {
     }
 
     // Determine images to keep
-    let existingImages = req.body.existingImages || [];
+    let existingImages = req.body.existingImages;
+
+    // If undefined/null, implies not sent? Or if sent as ""?
+    // Logic: If req.body.existingImages is undefined, it usually means "no change" in some APIs, but here we want to support "delete all".
+    // Frontend now sends "" if empty list.
+
+    if (existingImages === undefined) {
+      // Field missing. Assume "append" behavior / keep original (backward compatibility)
+      existingImages = project.images || [];
+    } else if (existingImages === "") {
+      // Explicitly empty
+      existingImages = [];
+    }
+
+    // Normalize to array
     if (!Array.isArray(existingImages)) {
       existingImages = [existingImages];
     }
 
-    if (!req.body.existingImages && req.body.existingImages !== "") {
-      existingImages = project.images || [];
-    }
+    // Filter out any empty strings that might have slipped in
+    existingImages = existingImages.filter((img) => img && img !== "");
 
     const finalImages = [...existingImages, ...newImageUrls];
 
