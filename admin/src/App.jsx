@@ -68,7 +68,9 @@ function App() {
         fetchProjects();
       }
     } catch (err) {
-      alert("Invalid credentials");
+      console.error("Login error:", err);
+      const msg = err.response?.data?.message || "Login failed";
+      alert(msg);
     }
   };
 
