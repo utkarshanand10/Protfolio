@@ -12,7 +12,13 @@ const app = express();
 const PORT = 5000;
 const JWT_SECRET = "your-secret-key-change-this-in-prod"; // Simple secret for now
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*", // Allow all origins for debugging, or specify your frontend URLs
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.use(express.json());
 
 // --- Cloudinary Configuration ---
