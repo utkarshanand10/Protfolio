@@ -14,8 +14,7 @@ const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-this-in-prod"; // Use ENV variable in production
 
 app.use(cors()); // Global CORS middleware
-app.options("(.*)", cors()); // Correct Express 5 syntax for catch-all preflight requests
-
+app.options(/.*/, cors()); // Express 5 compatible catch-all preflight route
 app.use(express.json());
 
 // Request Logger
@@ -36,6 +35,19 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Verify Cloudinary Config
+if (
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+) {
+  console.log("✅ Cloudinary Configuration: OK");
+} else {
+  console.warn(
+    "⚠️ Cloudinary Configuration: Missing some environment variables",
+  );
+}
+
 // --- Multer Storage (Cloudinary) ---
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -53,20 +65,25 @@ const connectDB = async () => {
     return;
   }
   if (!process.env.MONGO_URI) {
-    console.error("MONGO_URI is not defined in environment variables");
+    console.error(
+      "CRITICAL: MONGO_URI is not defined in environment variables",
+    );
     return;
   }
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("MongoDB Connected");
-    await seedAdmin(); // Seed admin user after connecting
+    console.log("✅ MongoDB Connected Successfully");
+    await seedAdmin();
   } catch (err) {
     console.error("MongoDB Connection Error:", err);
   }
 };
 
-// Connect to DB immediately but don't block export
-connectDB();
+// Middleware to ensure DB connection
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 // --- Schemas & Models ---
 const userSchema = new mongoose.Schema({
@@ -85,8 +102,9 @@ const projectSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const User = mongoose.model("User", userSchema);
-const Project = mongoose.model("Project", projectSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+const Project =
+  mongoose.models.Project || mongoose.model("Project", projectSchema);
 
 // --- Seed Admin User ---
 const seedAdmin = async () => {
