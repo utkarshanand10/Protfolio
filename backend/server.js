@@ -14,12 +14,28 @@ const JWT_SECRET = "your-secret-key-change-this-in-prod"; // Simple secret for n
 
 app.use(
   cors({
-    origin: "*", // Allow all origins for debugging, or specify your frontend URLs
+    origin: true, // Allow any origin that sends 'Origin' header
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+// Enable pre-flight request for all routes
+app.options(/.*/, cors());
+
 app.use(express.json());
+
+// Request Logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
+// Health Check
+app.get("/", (req, res) => {
+  res.send("Backend is running!");
+});
 
 // --- Cloudinary Configuration ---
 cloudinary.config({
