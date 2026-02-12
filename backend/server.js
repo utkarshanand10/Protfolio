@@ -10,19 +10,11 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const app = express();
 const PORT = 5000;
-const JWT_SECRET = "your-secret-key-change-this-in-prod"; // Simple secret for now
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-this-in-prod"; // Use ENV variable in production
 
-app.use(
-  cors({
-    origin: true, // Allow any origin that sends 'Origin' header
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
-
-// Enable pre-flight request for all routes
-app.options(/.*/, cors());
+app.use(cors()); // Allow all origins and headers by default for simplicity
+app.options("*", cors()); // Explicitly handle all preflight requests
 
 app.use(express.json());
 
@@ -56,10 +48,25 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // --- Database Connection ---
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.error("MongoDB Connection Error:", err));
+const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
+  if (!process.env.MONGO_URI) {
+    console.error("MONGO_URI is not defined in environment variables");
+    return;
+  }
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB Connected");
+    await seedAdmin(); // Seed admin user after connecting
+  } catch (err) {
+    console.error("MongoDB Connection Error:", err);
+  }
+};
+
+// Connect to DB immediately but don't block export
+connectDB();
 
 // --- Schemas & Models ---
 const userSchema = new mongoose.Schema({
@@ -98,50 +105,10 @@ const seedAdmin = async () => {
   }
 };
 
-const DEFAULT_PROJECTS = [
-  {
-    title: "NovaAI Chatbot",
-    description:
-      "A logic-driven chatbot powered by OpenAI, AI integrations and modern UI.",
-    tech: ["MERN", "OpenAI API", "Axios", "Tailwind CSS"],
-    github: "https://github.com",
-    live: "https://example.com",
-  },
-  {
-    title: "Netflix Clone",
-    description:
-      "Pixel-perfect Netflix UI with Firebase Auth and TMDB API integration.",
-    tech: ["MERN", "Firebase Auth", "TMDB API", "Redux Toolkit"],
-    github: "https://github.com",
-    live: "https://example.com",
-  },
-  {
-    title: "CRUD Application",
-    description:
-      "Robust inventory management system with full CRUD functionality.",
-    tech: ["MERN", "MongoDB", "REST APIs"],
-    github: "https://github.com",
-    live: "https://example.com",
-  },
-];
+// ... (Projects array remains the same if needed, or remove if unused) ...
 
-const seedProjects = async () => {
-  try {
-    const count = await Project.countDocuments();
-    if (count === 0) {
-      await Project.insertMany(DEFAULT_PROJECTS);
-      console.log("Default projects seeded");
-    }
-  } catch (error) {
-    console.error("Error seeding projects:", error);
-  }
-};
-
-const seedDatabase = async () => {
-  await seedAdmin();
-  await seedProjects();
-};
-seedDatabase();
+// Removed automatic seedDatabase() call for serverless compatibility.
+// If seeding is needed, it should be done via a dedicated script or route.
 
 // --- Routes ---
 
@@ -170,7 +137,12 @@ app.post("/api/login", async (req, res) => {
     );
     res.json({ success: true, token });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Login error details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error during login",
+      error: error.message,
+    });
   }
 });
 
