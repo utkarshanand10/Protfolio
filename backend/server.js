@@ -327,10 +327,55 @@ app.delete("/api/projects/:id", async (req, res) => {
   }
 });
 
+const startServer = () => {
+  try {
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log("🟢 Ready for requests. Press Ctrl+C to stop.");
+    });
+
+    // Keep the process alive explicitly
+    setInterval(
+      () => {
+        // Dummy timer to prevent event loop from emptying
+      },
+      1000 * 60 * 60,
+    );
+
+    server.on("error", (err) => {
+      console.error("❌ Server Error:", err);
+      if (err.code === "EADDRINUSE") {
+        console.error(
+          `Port ${PORT} is already in use. Please kill the other process.`,
+        );
+      }
+    });
+
+    server.on("close", () => {
+      console.log("ℹ️ Server listener was closed.");
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+  }
+};
+
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  startServer();
 }
+
+// Catch unhandled rejections
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+// Catch uncaught exceptions
+process.on("uncaughtException", (err) => {
+  console.error("❌ Uncaught Exception:", err);
+});
+
+// Log when process exits
+process.on("exit", (code) => {
+  console.log(`ℹ️ Process exited with code: ${code}`);
+});
 
 module.exports = app;
