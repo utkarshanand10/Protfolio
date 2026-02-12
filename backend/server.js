@@ -13,8 +13,8 @@ const PORT = 5000;
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-this-in-prod"; // Use ENV variable in production
 
-app.use(cors()); // Allow all origins and headers by default for simplicity
-app.options("*", cors()); // Explicitly handle all preflight requests
+app.use(cors()); // Global CORS middleware
+app.options("(.*)", cors()); // Correct Express 5 syntax for catch-all preflight requests
 
 app.use(express.json());
 
