@@ -13,8 +13,10 @@ const PORT = 5000;
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-this-in-prod"; // Use ENV variable in production
 
+console.log("Bootstrap: Initializing middlewares...");
+
 app.use(cors()); // Global CORS middleware
-app.options(/.*/, cors()); // Express 5 compatible catch-all preflight route
+app.options("*", cors()); // Simplified catch-all preflight route for Express 5 compatibility
 app.use(express.json());
 
 // Request Logger
@@ -70,6 +72,8 @@ const connectDB = async () => {
     );
     return;
   }
+  console.log("Attempting to connect to MongoDB...");
+
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB Connected Successfully");
@@ -376,6 +380,16 @@ process.on("uncaughtException", (err) => {
 // Log when process exits
 process.on("exit", (code) => {
   console.log(`ℹ️ Process exited with code: ${code}`);
+});
+
+// Error Handler
+app.use((err, req, res, next) => {
+  console.error("Express Error Handler Captured:", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message: err.message,
+    stack: process.env.NODE_ENV === "production" ? "🥞" : err.stack,
+  });
 });
 
 module.exports = app;
